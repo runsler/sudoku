@@ -1,7 +1,7 @@
 //==================================================================================================
 //  Filename      : sudoku_solver.sv
 //  Created On    : 2019-02-11 10:09:42
-//  Last Modified : 2019-02-11 14:46:59
+//  Last Modified : 2019-02-12 10:47:54
 //  Revision      :
 //  Author        : Gregory Arkaev
 //  Email         : arkaev@live.ru
@@ -14,21 +14,23 @@ class sudoku_solver_base #(int M = 3); // M >= 1
 
   localparam N = M*M; //grid size
 
-  rand  int unsigned box [N-1:0][N-1:0]; //box contain puzzle
+  rand  int unsigned box [N][N]; //box contain puzzle
+
+`ifndef NOT_USE_UNIQUE
+  typedef logic [N-1:0] int_t;
+
+  local rand int_t [N-1:0] mesh [N-1:0];
+
+  constraint box_to_mesh { foreach ( mesh[i,j] ) { mesh[i][j] == box[i][j]; } }
+`endif
 
   // The value of each box must be between 1 and N.
   constraint box_con { foreach ( box[row, col] ) { box[row][col] inside { [1:N] }; } }
 
-  // The boxes on the same row must have unique values.
-  constraint row_con {
-    foreach   (box[row,cola]) {
-      foreach (box[   ,colb]) {
-          if (cola != colb) { box[row][cola] != box[row][colb]; }
-      }
-    }
-  }
-
   // The boxes on the same column must have unique values.
+`ifndef NOT_USE_UNIQUE
+  constraint mesh_column_con { foreach (mesh[i,]) { unique {mesh[i]}; } }
+`else
   constraint column_con {
     foreach   ( box[rowa, col] ) {
       foreach ( box[rowb,    ] ) {
@@ -38,8 +40,33 @@ class sudoku_solver_base #(int M = 3); // M >= 1
       }
     }
   }
+`endif
+
+  // The boxes on the same row must have unique values.
+`ifndef NOT_USE_UNIQUE
+  local rand int_t [N-1:0] mesh_trans [N-1:0];
+
+  constraint mesh_to_meshtrans { foreach ( mesh_trans[i,j] ) { mesh_trans[i][j] == box[j][i]; } }
+
+  constraint mesh_row_con { foreach (mesh_trans[i,]) { unique {mesh_trans[i]}; } }
+`else
+  constraint row_con {
+    foreach   (box[row,cola]) {
+      foreach (box[   ,colb]) {
+          if (cola != colb) { box[row][cola] != box[row][colb]; }
+      }
+    }
+  }
+`endif
 
   // The boxes in the same MxM block must have unique values.
+`ifndef NOT_USE_UNIQUE
+  local rand int_t [N-1:0] mesh_block [N-1:0];
+
+  constraint box_to_mesh_block { foreach ( mesh_block[i,j] ) { mesh_block[i][j] == box[(i/M)*M+j/M][(i%M)*M+j%M]; } }
+
+  constraint mesh_block_con { foreach (mesh_block[i,]) { unique {mesh_block[i]}; } }
+`else
   constraint block_con {
     foreach   ( box[rowa, cola] ) {
       foreach ( box[rowb, colb] ) {
@@ -51,6 +78,7 @@ class sudoku_solver_base #(int M = 3); // M >= 1
       }
     }
   }
+`endif
 
   function void post_randomize();
     print();

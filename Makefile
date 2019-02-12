@@ -7,6 +7,7 @@ default: compile
 
 analyze:
 	vlogan \
+	+define+NOT_USE_UNIQUE \
 	-assert svaext \
 	-simprofile time \
 	-simprofile mem \
