@@ -6,7 +6,7 @@ using for simulator constraint solver performance testing
 tested by Synopsys VCS Compiler version L-2016.06-SP1-1
 
 modifiable GRID_SIZE=3 parameter [range from 3 to 8]
-output format example 
+output format example
 
 ---------+---------+---------+
  2  9  7 | 4  8  3 | 6  5  1 |
